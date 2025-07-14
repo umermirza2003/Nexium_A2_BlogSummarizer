@@ -1,6 +1,6 @@
 # Nexium-Taimoor-Assignment-2
 
-## Blog Summariser
+## Blog Summarizer
 
 A Next.js app that scrapes a blog URL, generates a simulated AI summary, translates it to Urdu, and displays results using ShadCN UI.
 
