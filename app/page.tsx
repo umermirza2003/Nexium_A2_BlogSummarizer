@@ -1,3 +1,4 @@
+// pages/index.tsx
 'use client';
 
 import { useState } from 'react';
@@ -15,38 +16,24 @@ const urlSchema = z.object({
   url: z.string().url('Please enter a valid URL'),
 });
 
-type FormData = z.infer<typeof urlSchema>;
-
-interface ProcessedBlog {
-  url: string;
-  title: string;
-  content: string;
-  summary: string;
-  urduSummary: string;
-  wordCount: number;
-  readTime: number;
-}
-
 export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<ProcessedBlog | null>(null);
-  const [error, setError] = useState<string>('');
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(urlSchema),
-  });
+  const form = useForm({ resolver: zodResolver(urlSchema) });
 
   const steps = [
     { icon: Link, label: 'Input Blog URL', description: 'Enter the blog URL to process' },
     { icon: FileText, label: 'Scrape Text', description: 'Extract content from the webpage' },
     { icon: Brain, label: 'AI Summary', description: 'Generate intelligent summary' },
     { icon: Languages, label: 'Translate to Urdu', description: 'Convert summary to Urdu' },
-    { icon: Database, label: 'Save Summary (Supabase)', description: 'Store summary in database' },
-    { icon: Database, label: 'Save Full Text (MongoDB)', description: 'Store complete content' },
+    { icon: Database, label: 'Save to Supabase', description: 'Store summary securely' },
+    { icon: Database, label: 'Archive Full Text', description: 'Store complete content in MongoDB' },
   ];
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data) => {
     setIsProcessing(true);
     setError('');
     setResult(null);
@@ -55,21 +42,18 @@ export default function Home() {
     try {
       for (let i = 1; i <= steps.length; i++) {
         setCurrentStep(i);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(res => setTimeout(res, 500));
       }
-
-      const response = await fetch('/api/process-blog', {
+      const res = await fetch('/api/process-blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
-      if (!response.ok) throw new Error('Failed to process blog');
-
-      const processedData = await response.json();
-      setResult(processedData);
+      if (!res.ok) throw new Error('Processing failed');
+      const processed = await res.json();
+      setResult(processed);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err.message || 'Something went wrong');
     } finally {
       setIsProcessing(false);
       setCurrentStep(0);
@@ -77,174 +61,121 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 text-pink-900">
-      <nav className="border-b border-pink-200 bg-pink-100 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-pink-500 rounded-sm flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-semibold">Blog Summariser</span>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-green-800 text-white">
+      <nav className="bg-green-900 border-b border-green-700">
+        <div className="container mx-auto px-4 h-16 flex items-center gap-3">
+          <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
+            <BookOpen className="text-white h-5 w-5" />
           </div>
+          <span className="text-xl font-bold">Blog Summariser</span>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl space-y-12">
-        <section className="space-y-4">
-          <h1 className="text-4xl font-bold flex items-center gap-2">
-            <Sparkles className="text-pink-400" />
-            Smart Blog Summariser
+      <main className="max-w-4xl mx-auto px-4 py-10 space-y-10">
+        <header className="space-y-2">
+          <h1 className="text-4xl font-bold text-lime-300 flex items-center gap-2">
+            <Sparkles className="text-lime-400" /> AI Blog Summariser
           </h1>
-          <p className="text-lg text-pink-700">
-            Paste a blog URL and let our AI generate a clean summary for you — in both English and Urdu!
+          <p className="text-green-200 text-lg">
+            Paste a blog URL to get smart summaries in English and Urdu instantly.
           </p>
-        </section>
+        </header>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">✨ Features</h2>
-          <ul className="list-disc list-inside space-y-2 text-pink-800">
-            <li>Smart content scraping from blog URLs</li>
-            <li>AI-generated summary in English</li>
-            <li>Automatic Urdu translation</li>
-            <li>Read time and word count estimation</li>
-            <li>Summary stored in Supabase</li>
-            <li>Full content saved in MongoDB</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">🧾 How to Use</h2>
-          <ol className="list-decimal list-inside space-y-2 text-pink-800">
-            <li>Paste a valid blog URL in the input box</li>
-            <li>Click the <strong>Summarise</strong> button</li>
-            <li>Watch as the system processes the blog step-by-step</li>
-            <li>View summaries in both English and Urdu</li>
-          </ol>
-        </section>
-
-        {/* Form */}
-        <div>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Input
               type="url"
-              placeholder="Enter Blog URL"
+              placeholder="Enter blog URL..."
               {...form.register('url')}
-              className="h-12 bg-white border-pink-300 text-pink-800 placeholder:text-pink-400"
+              className="bg-green-800 border-green-600 text-white placeholder:text-green-400"
               disabled={isProcessing}
             />
             {form.formState.errors.url && (
-              <p className="text-sm text-red-500">{form.formState.errors.url.message}</p>
+              <p className="text-sm text-red-400">{form.formState.errors.url.message}</p>
             )}
             <Button
               type="submit"
               disabled={isProcessing}
-              className="bg-pink-500 hover:bg-pink-600 text-white px-8"
+              className="bg-lime-500 hover:bg-lime-600 text-black px-6"
             >
               {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
               ) : (
                 'Summarise'
               )}
             </Button>
           </form>
-        </div>
+        </section>
 
-        {/* Fancy Steps UI */}
         {isProcessing && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">🚀 Processing Steps</h2>
-            <div className="relative h-2 bg-pink-100 rounded-full overflow-hidden mb-6">
+          <section className="space-y-6">
+            <h2 className="text-2xl font-bold text-lime-300">🔄 Processing Pipeline</h2>
+            <div className="w-full h-2 bg-green-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-pink-500 transition-all duration-500 ease-out"
+                className="bg-gradient-to-r from-lime-400 to-green-400 h-full transition-all duration-500"
                 style={{ width: `${(currentStep / steps.length) * 100}%` }}
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid md:grid-cols-2 gap-4">
               {steps.map((step, index) => {
-                const StepIcon = step.icon;
-                const isCompleted = currentStep > index + 1;
-                const isActive = currentStep === index + 1;
-
+                const Icon = step.icon;
+                const active = currentStep === index + 1;
+                const done = currentStep > index + 1;
                 return (
                   <Card
                     key={index}
-                    className={`
-                      border ${
-                        isCompleted
-                          ? 'border-green-400 bg-green-50'
-                          : isActive
-                          ? 'border-pink-400 bg-white animate-pulse'
-                          : 'border-pink-100 bg-pink-50'
-                      } transition-all
-                    `}
+                    className={`border transition-all duration-300 shadow-md bg-white/5 ${done ? 'border-green-500' : active ? 'border-lime-400 animate-pulse' : 'border-green-700'}`}
                   >
-                    <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center 
-                        ${isCompleted ? 'bg-green-400 text-white' :
-                          isActive ? 'bg-pink-500 text-white' :
-                          'bg-pink-100 text-pink-600'}
-                      `}>
-                        {isCompleted ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                    <CardHeader className="flex items-center gap-4">
+                      <div className={`w-9 h-9 flex items-center justify-center rounded-full ${done ? 'bg-green-500' : active ? 'bg-lime-500' : 'bg-green-800'} text-white`}>
+                        {done ? <CheckCircle className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                       </div>
-                      <CardTitle className="text-base">{step.label}</CardTitle>
+                      <CardTitle className="text-white text-base">{step.label}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-pink-700">{step.description}</p>
+                      <p className="text-sm text-green-300">{step.description}</p>
                     </CardContent>
                   </Card>
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Error */}
         {error && (
-          <Alert className="mb-8 border-red-300 bg-red-100 text-red-700">
+          <Alert className="bg-red-900/30 border-red-500 text-red-300">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Results */}
         {result && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Summary Results</h2>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-bold text-lime-300">📄 Results</h2>
 
-            <Card className="bg-white border-pink-200">
+            <Card className="bg-green-900 border-green-600">
               <CardHeader>
-                <CardTitle className="text-pink-800">English Summary</CardTitle>
+                <CardTitle className="text-lime-300">English Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-pink-700 leading-relaxed mb-4">{result.summary}</p>
+                <p className="text-green-100 leading-relaxed mb-4">{result.summary}</p>
                 <div className="flex gap-2">
-                  <Badge className="bg-pink-200 text-pink-800">
-                    {result.wordCount} words
-                  </Badge>
-                  <Badge className="bg-pink-200 text-pink-800">
-                    {result.readTime} min read
-                  </Badge>
+                  <Badge className="bg-lime-600 text-black">{result.wordCount} words</Badge>
+                  <Badge className="bg-lime-600 text-black">{result.readTime} min read</Badge>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white border-pink-200">
+            <Card className="bg-green-900 border-green-600">
               <CardHeader>
-                <CardTitle className="text-pink-800">Urdu Translation</CardTitle>
+                <CardTitle className="text-lime-300">Urdu Translation</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-pink-700 leading-relaxed text-right" dir="rtl">
-                  {result.urduSummary}
-                </p>
+                <p className="text-green-100 leading-relaxed text-right" dir="rtl">{result.urduSummary}</p>
               </CardContent>
             </Card>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }

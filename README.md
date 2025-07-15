@@ -1,4 +1,4 @@
-# Nexium-Taimoor-Assignment-2
+# Nexium-Umer Mirza-Assignment-2
 
 ## Blog Summarizer
 
