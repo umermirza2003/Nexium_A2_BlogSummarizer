@@ -16,13 +16,15 @@ const urlSchema = z.object({
   url: z.string().url('Please enter a valid URL'),
 });
 
+type FormData = z.infer<typeof urlSchema>;
+
 export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
 
-  const form = useForm({ resolver: zodResolver(urlSchema) });
+  const form = useForm<FormData>({ resolver: zodResolver(urlSchema) });
 
   const steps = [
     { icon: Link, label: 'Input Blog URL', description: 'Enter the blog URL to process' },
@@ -33,7 +35,7 @@ export default function Home() {
     { icon: Database, label: 'Archive Full Text', description: 'Store complete content in MongoDB' },
   ];
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: FormData) => {
     setIsProcessing(true);
     setError('');
     setResult(null);
@@ -44,15 +46,18 @@ export default function Home() {
         setCurrentStep(i);
         await new Promise(res => setTimeout(res, 500));
       }
+
       const res = await fetch('/api/process-blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
+
       if (!res.ok) throw new Error('Processing failed');
+
       const processed = await res.json();
       setResult(processed);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {
       setIsProcessing(false);
